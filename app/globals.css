@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+--profound-mauve-50: hsl(300 0% 1%);
+--profound-mauve-100: hsl(291 0% 1%);
+--profound-mauve-200: hsl(295 0% 1%);
+--profound-mauve-300: hsl(300 0% 1%);
+--profound-mauve-400: hsl(300 0% 1%);
+--profound-mauve-500: hsl(300 0% 1%);
+--profound-mauve-600: hsl(301 0% 0%);
+--profound-mauve-700: hsl(303 0% 0%);
+--profound-mauve-800: hsl(304 0% 0%);
+--profound-mauve-900: hsl(305 0% 0%);
+--profound-mauve-950: hsl(305 0% 0%);
+
+html {
+    background-color: var(--profound-mauve-950)
+}
