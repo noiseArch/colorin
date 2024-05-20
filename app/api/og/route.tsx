@@ -1,6 +1,6 @@
 import { genColor, getColorPaletteFamily } from "@/utils/actions";
 import { Color, ColorPaletteNumber } from "@/utils/types";
-import chroma from "chroma-js";
+import { contrast } from "chroma-js";
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
@@ -27,13 +27,11 @@ export async function GET(req: Request) {
             fontSize: 42,
             background: color.hex,
             color:
-              chroma.contrast(color.hex, "white") > 2
-                ? scale[2].hex
-                : scale[8].hex,
+              contrast(color.hex, "white") > 2 ? scale[2].hex : scale[8].hex,
             fontWeight: 700,
           }}
         >
-          <span tw="font-bold">{color.name}</span>
+          <span>{color.name}</span>
           <span>{color.hex}</span>
         </div>
       ),
@@ -43,7 +41,7 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    return new Response("Dynamic Metadata generation failed", { status: 500 });
     console.log(error);
+    return new Response("Dynamic Metadata generation failed", { status: 500 });
   }
 }
