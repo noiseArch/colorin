@@ -1,25 +1,33 @@
 import { Metadata } from "next";
 import Main from "@/components/Main";
-import { ImageResponse } from "next/og";
-import chroma from "chroma-js";
-import { genColor, getColorPaletteFamily } from "@/utils/actions";
-import { Color } from "@/utils/types";
-
-type Props = {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
+import { Suspense } from "react";
 
 export async function generateMetadata(props: {
   params: {};
   searchParams: { hex: string };
 }): Promise<Metadata> {
+  const hex = props.searchParams.hex
+  const ogUrl = new URL(`https://spectraly.vercel.app/api/og`)
+  ogUrl.searchParams.set("hex", hex)
   return {
-    title: "colorar",
-    metadataBase: new URL('https://spectraly.vercel.app/'),
+    title: "colorAr - " + hex,
+    metadataBase: new URL("https://spectraly.vercel.app/"),
+    openGraph: {
+      title: "colorAr - " + hex,
+      description: "",
+      images: [
+        {
+          url: ogUrl.toString()
+        }
+      ]
+    }
   };
 }
 
 export default function Home() {
-  return <Main />;
+  return (
+    <Suspense>
+      <Main />
+    </Suspense>
+  );
 }
