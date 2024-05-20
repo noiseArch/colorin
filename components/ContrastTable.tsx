@@ -10,10 +10,14 @@ type Props = {
 export default function ContrastTable({ grid, score, mode }: Props) {
   return (
     <div className="flex flex-col gap-1">
-      {grid.map((row: TRow) => (
-        <div className="flex w-full h-full justify-between items-center gap-1">
-          {row.map((n) => (
+      {grid.map((row: TRow, i) => (
+        <div
+          key={i}
+          className="flex w-full h-full justify-between items-center gap-1"
+        >
+          {row.map((n, j) => (
             <span
+              key={j}
               style={{ color: n.color1, backgroundColor: n.color2 }}
               className={
                 (score == "aaa" && mode == "wcag" && n.contrast < 7) ||

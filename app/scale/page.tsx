@@ -176,6 +176,7 @@ export default function Components({}: Props) {
           <div className="w-full flex flex-col gap-2">
             {scale.map((c, i) => (
               <div
+                key={i}
                 style={{
                   backgroundColor: c.hex,
                   color:

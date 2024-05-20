@@ -99,7 +99,8 @@ export default function Home() {
                   style={{
                     backgroundColor: palette ? palette[0] : "beige",
                     color:
-                      chroma.contrast("white", palette ? palette[0] : "beige") > 2
+                      chroma.contrast("white", palette ? palette[0] : "beige") >
+                      2
                         ? "white"
                         : "rgb(15 23 42)",
                   }}
@@ -131,8 +132,9 @@ export default function Home() {
             }
           >
             {palette ? (
-              palette.map((c) => (
+              palette.map((c, i) => (
                 <div
+                  key={i}
                   style={{ backgroundColor: c }}
                   className="w-full h-32 flex flex-col items-center justify-around"
                 >

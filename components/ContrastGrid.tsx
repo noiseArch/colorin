@@ -106,8 +106,8 @@ export default function ContrastGrid({
         <div className="flex flex-col gap-4">
           <div className="flex w-full h-full justify-between items-center">
             {["", "White", ...scale.flatMap((s) => s.step), "Black"].map(
-              (s: any) => (
-                <span className="font-medium aspect-square flex items-center w-full justify-center">
+              (s: any, i) => (
+                <span key={i} className="font-medium aspect-square flex items-center w-full justify-center">
                   {s}
                 </span>
               )
@@ -116,8 +116,8 @@ export default function ContrastGrid({
           <div className="flex w-full gap-4">
             <div className="flex flex-col justify-between items-center">
               {["White", ...scale.flatMap((s) => s.step), "Black"].map(
-                (s: any) => (
-                  <span className="font-medium aspect-square flex items-center w-full justify-center">
+                (s: any, i) => (
+                  <span key={i} className="font-medium aspect-square flex items-center w-full justify-center">
                     {s}
                   </span>
                 )

@@ -219,8 +219,9 @@ export default function Main({}: Props) {
           >
             <div className="flex flex-col gap-1 w-full">
               <span className="font-semibold text-lg ">Analogous</span>
-              {color.palettes.analogous.map((color) => (
+              {color.palettes.analogous.map((color, i) => (
                 <div
+                  key={i}
                   style={{
                     backgroundColor: color,
                     color:
@@ -238,8 +239,9 @@ export default function Main({}: Props) {
             </div>
             <div className="flex flex-col gap-1 w-full">
               <span className="font-semibold text-lg">Monochromatic</span>
-              {color.palettes.monochromatic.map((color) => (
+              {color.palettes.monochromatic.map((color, i) => (
                 <div
+                  key={i}
                   style={{
                     backgroundColor: color,
                     color:
@@ -257,8 +259,9 @@ export default function Main({}: Props) {
             </div>
             <div className="flex flex-col gap-1 w-full">
               <span className="font-semibold text-lg">Triad</span>
-              {color.palettes.triad.map((color) => (
+              {color.palettes.triad.map((color, i) => (
                 <div
+                  key={i}
                   style={{
                     backgroundColor: color,
                     color:
@@ -276,8 +279,9 @@ export default function Main({}: Props) {
             </div>
             <div className="flex flex-col gap-1 w-full">
               <span className="font-semibold text-lg">Tetrad</span>
-              {color.palettes.tetrad.map((color) => (
+              {color.palettes.tetrad.map((color, i) => (
                 <div
+                  key={i}
                   style={{
                     backgroundColor: color,
                     color:
