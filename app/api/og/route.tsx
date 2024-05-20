@@ -3,8 +3,6 @@ import { Color, ColorPaletteNumber } from "@/utils/types";
 import { contrast } from "chroma-js";
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
