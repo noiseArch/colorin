@@ -17,6 +17,8 @@ export async function generateMetadata(props: {
       description: "",
       images: [
         {
+          width: 1200,
+          height: 630,
           url: ogUrl.toString()
         }
       ]
