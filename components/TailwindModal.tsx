@@ -1,4 +1,5 @@
 import { generateVariables } from "@/utils/fns";
+import { X } from "lucide-react";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { CopyBlock, atomOneDark } from "react-code-blocks";
 import { useSelector } from "react-redux";
@@ -52,37 +53,29 @@ export default function TailwindModal({
       setCode(await generateVariables(color, colorName));
     };
     getCodes();
-  }, []);
+  }, [color, colorName]);
 
   return (
     <>
       <div
         onClick={() => setModalOpen(false)}
-        className="bg-black opacity-40 w-screen h-screen absolute top-0 left-0 z-[998]"
+        className="bg-black opacity-40 w-screen h-[100dvh] absolute top-0 left-0 z-[998]"
       />
       <div
         className={
           darkMode
-            ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-zinc-900 w-1/2 z-[999] rounded-xl p-8 gap-8 flex flex-col"
-            : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white w-1/2 z-[999] rounded-xl p-8 gap-8 flex flex-col"
+            ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-zinc-900 md:w-1/2 z-[999] rounded-xl p-8 gap-8 flex flex-col"
+            : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white w-full md:w-1/2 z-[999] rounded-xl p-8 gap-8 flex flex-col"
         }
       >
         <div className="flex justify-between items-center">
           <h2 className="font-medium text-2xl">Export to TailwindCSS</h2>
           <button onClick={() => setModalOpen(false)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="30"
-              height="30"
-              className={darkMode ? "fill-white" : "fill-slate-900"}
-              viewBox="0 0 16 16"
-            >
-              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-            </svg>
+            <X />
           </button>
         </div>
         <div className="flex gap-8">
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-4 items-center flex-wrap">
             <span>Framework:</span>
             <button
               disabled={framework == "tw"}
@@ -118,7 +111,7 @@ export default function TailwindModal({
               CSS
             </button>
           </div>
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-4 items-center flex-wrap">
             <span>Format:</span>
             <button
               disabled={formatMode == "hex"}
@@ -177,6 +170,7 @@ export default function TailwindModal({
               ? code[framework].rgb
               : code[framework].hsl
           }
+          wrapLongLines
           showLineNumbers
           theme={atomOneDark}
           language="js"

@@ -7,13 +7,13 @@ export async function generateMetadata(props: {
   searchParams: { hex: string };
 }): Promise<Metadata> {
   const hex = props.searchParams.hex
-  const ogUrl = new URL(`https://spectraly.vercel.app/api/og`)
+  const ogUrl = new URL(`https://colorinly.vercel.app/api/og`)
   ogUrl.searchParams.set("hex", hex)
   return {
-    title: "colorAr - " + hex,
-    metadataBase: new URL("https://spectraly.vercel.app/"),
+    title: "colorinly - " + hex,
+    metadataBase: new URL("https://colorinly.vercel.app/"),
     openGraph: {
-      title: "colorAr - " + hex,
+      title: "colorinly - " + hex,
       description: "",
       images: [
         {

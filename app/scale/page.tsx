@@ -9,6 +9,7 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Toaster, toast } from "sonner";
+import { Calendar } from "@/components/ui/calendar";
 
 type Props = {};
 
@@ -72,15 +73,15 @@ export default function Components({}: Props) {
       setLoadingScale(false);
     };
     getAsyncColor();
-  }, [searchParams]);
+  }, [pathname, router, searchParams]);
   return (
     <>
       <Toaster richColors position="top-center" />
       <main
         className={
           darkMode
-            ? "bg-zinc-900 text-white h-full w-full flex justify-between gap-6 px-12 transition"
-            : "bg-z text-slate-900 h-full w-full flex justify-between gap-6 px-12 transition"
+            ? "h-full overflow-hidden md:overflow-auto bg-zinc-900 text-white w-full flex md:flex-row flex-col justify-between gap-6 px-12 transition"
+            : "h-full overflow-hidden md:overflow-auto bg-white text-slate-900 w-full flex md:flex-row flex-col justify-between gap-6 px-12 transition"
         }
       >
         {isTWModalOpen && (
@@ -100,7 +101,7 @@ export default function Components({}: Props) {
             setModalOpen={setContrastOpen}
           />
         )}
-        <div className="h-full w-1/3 rounded-xl p-8 flex flex-col gap-4">
+        <div className="h-full w-full md:w-1/3 rounded-xl p-4 md:p-8 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-xl w-full">Color Scale</h2>
             <div className="flex gap-4 w-full justify-end">
@@ -108,7 +109,13 @@ export default function Components({}: Props) {
                 onClick={() => setContrastOpen(true)}
                 className="flex items-center gap-1 group relative"
               >
-                <span className="group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-gray-300 bg-white shadow-xl p-1 rounded text-sm transition">
+                <span
+                  className={
+                    darkMode
+                      ? "group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-zinc-500 bg-zinc-700 shadow-xl p-1 rounded text-sm transition"
+                      : "group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-gray-300 bg-white shadow-xl p-1 rounded text-sm transition"
+                  }
+                >
                   WCAG/APCA
                 </span>
                 <svg
@@ -127,9 +134,15 @@ export default function Components({}: Props) {
                   generateSVG(scale.map((c) => c.hex));
                   toast.success("SVG copied to clipboard!");
                 }}
-                className="flex items-center gap-1 group relative"
+                className="md:flex items-center gap-1 group relative hidden"
               >
-                <span className="group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-gray-300 bg-white shadow-xl p-1 rounded text-sm transition">
+                <span
+                  className={
+                    darkMode
+                      ? "group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-zinc-500 bg-zinc-700 shadow-xl p-1 rounded text-sm transition"
+                      : "group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-gray-300 bg-white shadow-xl p-1 rounded text-sm transition"
+                  }
+                >
                   Copy
                 </span>
                 <svg
@@ -167,7 +180,13 @@ export default function Components({}: Props) {
                     d="M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708z"
                   />
                 </svg>
-                <span className="group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-gray-300 bg-white shadow-xl p-1 rounded text-sm transition">
+                <span
+                  className={
+                    darkMode
+                      ? "group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-zinc-500 bg-zinc-700 shadow-xl p-1 rounded text-sm transition"
+                      : "group-hover:opacity-100 opacity-0 absolute -translate-x-1/2 left-1/2 -top-10 border border-gray-300 bg-white shadow-xl p-1 rounded text-sm transition"
+                  }
+                >
                   Export
                 </span>
               </button>
@@ -197,97 +216,127 @@ export default function Components({}: Props) {
           </div>
         </div>
         {!loadingScale && (
-          <div className="h-full w-2/3 flex flex-col gap-4">
-            <h2 className="font-medium text-3xl">{color.name}</h2>
-            <div className="flex gap-4 h-1/2 w-full">
+          <div className="h-full w-full md:w-2/3 flex flex-col gap-4">
+            <h2 className="font-medium text-3xl w-full text-center md:text-left">
+              {color.name}
+            </h2>
+            <div className="flex md:flex-row flex-col gap-4 md:h-1/2 w-full">
               <div
                 style={{
-                  backgroundColor: scale[7].hex,
-                  borderColor: scale[5].hex,
+                  backgroundColor: scale[6].hex,
+                  borderColor: scale[6].hex,
                 }}
-                className="border p-4 w-1/3 h-full rounded-lg flex flex-col"
+                className="border p-4 w-full md:w-1/3 h-1/2 rounded-xl   flex flex-col"
               >
                 <span style={{ color: scale[2].hex }}>Views</span>
                 <div className="h-full flex flex-col justify-center">
                   <span
                     className="font-medium text-6xl"
-                    style={{ color: scale[1].hex }}
+                    style={{ color: scale[3].hex }}
                   >
                     2.789
                   </span>
-                  <span className="text-lg" style={{ color: scale[2].hex }}>
+                  <span className="text-lg" style={{ color: scale[4].hex }}>
                     More views than last month
                   </span>
                 </div>
               </div>
-              <div className="border p-4 w-1/3 h-full rounded-lg flex flex-col">
-                <span>Calendar</span>
-                <div className="h-full flex flex-col justify-center">
-                  <span
-                    className="font-medium text-4xl"
-                    style={{ color: scale[2].hex }}
-                  >
-                    Something
+              <Calendar
+                mode="single"
+                styles={{
+                  root: {
+                    borderColor: scale[6].hex,
+                    backgroundColor: scale[6].hex,
+                  },
+                  head_cell: { color: scale[3].hex },
+                  cell: { color: scale[1].hex },
+                  month: { color: scale[1].hex },
+                }}
+                modifiersStyles={{
+                  today: { backgroundColor: scale[3].hex, color: scale[7].hex },
+                  outside: { color: scale[5].hex },
+                }}
+                className="rounded-xl border h-fit"
+              />
+              <div
+                style={{ backgroundColor: scale[6].hex }}
+                className="gap-4 p-4 w-full md:w-1/3 h-full rounded-xl flex flex-col"
+              >
+                <div className="h-1/2 flex flex-col gap-2">
+                  <span style={{ color: scale[2].hex }} className="font-medium">
+                    Today
                   </span>
-                  <span className="text-lg" style={{ color: scale[2].hex }}>
-                    Another something
-                  </span>
-                </div>
-                <button
-                  style={{ backgroundColor: scale[5].hex, color: scale[1].hex }}
-                  className="rounded-lg px-3 py-1 text-sm w-fit"
-                >
-                  Continue
-                </button>
-              </div>
-              <div className="border gap-4 p-4 w-1/3 h-full rounded-lg flex flex-col">
-                <span className="font-medium">Today</span>
-                <div className="flex flex-col gap-2">
-                  <div
-                    style={{
-                      backgroundColor: scale[2].hex,
-                      borderColor: scale[7].hex,
-                    }}
-                    className="h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
-                  >
-                    <span
-                      className="font-medium text-lg"
-                      style={{ color: scale[7].hex }}
+                  <div className="flex flex-col gap-2">
+                    <div
+                      style={{
+                        backgroundColor: scale[2].hex,
+                        borderColor: scale[4].hex,
+                      }}
+                      className="md:h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
                     >
-                      Event 1
-                    </span>
-                    <span className="text-sm" style={{ color: scale[6].hex }}>
-                      9 AM - 10 AM
-                    </span>
+                      <span
+                        className="font-medium text-lg"
+                        style={{ color: scale[7].hex }}
+                      >
+                        Event 1
+                      </span>
+                      <span className="text-sm" style={{ color: scale[6].hex }}>
+                        9 AM - 10 AM
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: scale[2].hex,
+                        borderColor: scale[4].hex,
+                      }}
+                      className="md:h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
+                    >
+                      <span
+                        className="font-medium text-lg"
+                        style={{ color: scale[7].hex }}
+                      >
+                        Event 2
+                      </span>
+                      <span className="text-sm" style={{ color: scale[6].hex }}>
+                        11 AM - 2 PM
+                      </span>
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      backgroundColor: scale[2].hex,
-                      borderColor: scale[7].hex,
-                    }}
-                    className="h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
-                  >
-                    <span
-                      className="font-medium text-lg"
-                      style={{ color: scale[7].hex }}
+                </div>
+                <div className="h-1/2 flex flex-col gap-2">
+                  <span style={{ color: scale[2].hex }} className="font-medium">
+                    Tomorrow
+                  </span>
+                  <div className="flex flex-col gap-2 h-full">
+                    <div
+                      style={{
+                        backgroundColor: scale[2].hex,
+                        borderColor: scale[4].hex,
+                      }}
+                      className="flex flex-col justify-center rounded-lg border-l-8 p-2"
                     >
-                      Event 2
-                    </span>
-                    <span className="text-sm" style={{ color: scale[6].hex }}>
-                      11 AM - 2 PM
-                    </span>
+                      <span
+                        className="font-medium text-lg"
+                        style={{ color: scale[7].hex }}
+                      >
+                        Event 3
+                      </span>
+                      <span className="text-sm" style={{ color: scale[6].hex }}>
+                        9 AM - 11 PM
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-4 h-full w-full">
+            <div className="flex md:flex-row flex-col gap-4 md:h-1/2 w-full">
               <div
                 style={{
-                  backgroundColor: scale[3].hex,
+                  backgroundColor: scale[2].hex,
                   borderColor: scale[7].hex,
                 }}
-                className="border p-4 w-1/3 h-1/2 rounded-lg flex flex-col"
+                className="border p-4 w-full md:w-1/3 h-1/2 rounded-xl flex flex-col"
               >
                 <span style={{ color: scale[7].hex }}>Views</span>
                 <div className="h-full flex flex-col justify-center">
@@ -302,62 +351,90 @@ export default function Components({}: Props) {
                   </span>
                 </div>
               </div>
-              <div className="border p-4 w-1/3 h-1/2 rounded-lg flex flex-col">
-                <span>Calendar</span>
-                <div className="h-full flex flex-col justify-center">
-                  <span
-                    className="font-medium text-4xl"
-                    style={{ color: scale[2].hex }}
-                  >
-                    Something
+              <Calendar
+                mode="single"
+                styles={{
+                  root: {
+                    borderColor: scale[7].hex,
+                    backgroundColor: scale[2].hex,
+                  },
+                  head_cell: { color: scale[6].hex },
+                  cell: { color: scale[8].hex },
+                  month: { color: scale[8].hex },
+                }}
+                modifiersStyles={{
+                  today: { backgroundColor: scale[6].hex, color: scale[2].hex },
+                  outside: { color: scale[5].hex },
+                }}
+                className="rounded-xl border h-fit"
+              />
+              <div
+                style={{ backgroundColor: scale[2].hex }}
+                className="gap-4 p-4 w-full md:w-1/3 h-full rounded-xl flex flex-col"
+              >
+                <div className="flex flex-col gap-2 h-full">
+                  <span style={{ color: scale[8].hex }} className="font-medium">
+                    Today
                   </span>
-                  <span className="text-lg" style={{ color: scale[2].hex }}>
-                    Another something
-                  </span>
-                </div>
-                <button
-                  style={{ backgroundColor: scale[5].hex, color: scale[1].hex }}
-                  className="rounded-lg px-3 py-1 text-sm w-fit"
-                >
-                  Continue
-                </button>
-              </div>
-              <div className="border gap-4 p-4 w-1/3 h-1/2 rounded-lg flex flex-col">
-                <span className="font-medium">Today</span>
-                <div className="flex flex-col gap-2">
-                  <div
-                    style={{
-                      backgroundColor: scale[2].hex,
-                      borderColor: scale[7].hex,
-                    }}
-                    className="h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
-                  >
-                    <span
-                      className="font-medium text-lg"
-                      style={{ color: scale[7].hex }}
+                  <div className="flex flex-col gap-2">
+                    <div
+                      style={{
+                        backgroundColor: scale[6].hex,
+                        borderColor: scale[9].hex,
+                      }}
+                      className="md:h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
                     >
-                      Event 1
-                    </span>
-                    <span className="text-sm" style={{ color: scale[6].hex }}>
-                      9 AM - 10 AM
-                    </span>
+                      <span
+                        className="font-medium text-lg"
+                        style={{ color: scale[1].hex }}
+                      >
+                        Event 1
+                      </span>
+                      <span className="text-sm" style={{ color: scale[3].hex }}>
+                        9 AM - 10 AM
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: scale[6].hex,
+                        borderColor: scale[9].hex,
+                      }}
+                      className="md:h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
+                    >
+                      <span
+                        className="font-medium text-lg"
+                        style={{ color: scale[1].hex }}
+                      >
+                        Event 2
+                      </span>
+                      <span className="text-sm" style={{ color: scale[3].hex }}>
+                        11 AM - 2 PM
+                      </span>
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      backgroundColor: scale[2].hex,
-                      borderColor: scale[7].hex,
-                    }}
-                    className="h-1/2 flex flex-col justify-center rounded-lg border-l-8 p-2"
-                  >
-                    <span
-                      className="font-medium text-lg"
-                      style={{ color: scale[7].hex }}
+                </div>
+                <div className="flex flex-col gap-2 h-full">
+                  <span style={{ color: scale[8].hex }} className="font-medium">
+                    Tomorrow
+                  </span>
+                  <div className="flex flex-col gap-2 h-full">
+                    <div
+                      style={{
+                        backgroundColor: scale[6].hex,
+                        borderColor: scale[9].hex,
+                      }}
+                      className="flex flex-col justify-center rounded-lg border-l-8 p-2"
                     >
-                      Event 2
-                    </span>
-                    <span className="text-sm" style={{ color: scale[6].hex }}>
-                      11 AM - 2 PM
-                    </span>
+                      <span
+                        className="font-medium text-lg"
+                        style={{ color: scale[1].hex }}
+                      >
+                        Event 3
+                      </span>
+                      <span className="text-sm" style={{ color: scale[3].hex }}>
+                        9 AM - 11 AM
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -6,9 +6,7 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-type Props = {};
-
-export default function Navbar({}: Props) {
+export default function Navbar() {
   const dispatch = useDispatch();
   const darkMode = useSelector(
     (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
@@ -16,27 +14,69 @@ export default function Navbar({}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  console.log(darkMode);
   return (
     <nav
       className={
         darkMode
-          ? "bg-zinc-900 text-white w-full h-24 justify-between items-center flex py-4 px-12 transition"
-          : "bg-white text-slate-800 w-full h-24 justify-between items-center flex py-4 px-12 transition"
+          ? "bg-zinc-900 text-white w-full h-24 justify-between items-center flex flex-col md:flex-row py-4 px-6 md:px-12 transition"
+          : "bg-white text-slate-800 w-full h-24 justify-between items-center flex flex-col md:flex-row py-4 px-6 md:px-12 transition"
       }
     >
       <Link
-        className="font-semibold text-xl"
+        className="font-semibold text-xl relative group"
         href={"/?" + searchParams.toString()}
       >
-        colorar
+        colorinly
+        <div
+          className="absolute bottom-0 left-0 h-[3px] w-full origin-bottom-right scale-x-0 transform bg-slate-900 transition duration-300 ease-out group-hover:origin-bottom-left group-hover:scale-x-100"
+          style={{
+            backgroundColor: searchParams.get("hex")
+              ? "#" + searchParams.get("hex")
+              : "black",
+          }}
+        />
       </Link>
       <div className="flex gap-4 items-center">
-        <Link href={"/?" + searchParams.toString()}>Home</Link>
+        <Link className="relative group" href={"/?" + searchParams.toString()}>
+          Info
+          <div
+            className="absolute bottom-0 left-0 h-[3px] w-full origin-bottom-right scale-x-0 transform bg-slate-900 transition duration-300 ease-out group-hover:origin-bottom-left group-hover:scale-x-100"
+            style={{
+              backgroundColor: searchParams.get("hex")
+                ? "#" + searchParams.get("hex")
+                : "black",
+            }}
+          />
+        </Link>
 
-        <Link href={"/scale?" + searchParams.toString()}>Scale</Link>
-        <Link href={"/create?" + searchParams.toString()}>Create</Link>
-        <Link href={"/extract"}>Extract</Link>
+        <Link
+          className="relative group"
+          href={"/scale?" + searchParams.toString()}
+        >
+          Scale
+          <div
+            className="absolute bottom-0 left-0 h-[3px] w-full origin-bottom-right scale-x-0 transform bg-slate-900 transition duration-300 ease-out group-hover:origin-bottom-left group-hover:scale-x-100"
+            style={{
+              backgroundColor: searchParams.get("hex")
+                ? "#" + searchParams.get("hex")
+                : "black",
+            }}
+          />
+        </Link>
+        <Link
+          className="relative group"
+          href={"/create?" + searchParams.toString()}
+        >
+          Create
+          <div
+            className="absolute bottom-0 left-0 h-[3px] w-full origin-bottom-right scale-x-0 transform bg-slate-900 transition duration-300 ease-out group-hover:origin-bottom-left group-hover:scale-x-100"
+            style={{
+              backgroundColor: searchParams.get("hex")
+                ? "#" + searchParams.get("hex")
+                : "black",
+            }}
+          />
+        </Link>
         <button
           onClick={() => {
             const params = new URLSearchParams(searchParams.toString());
@@ -44,9 +84,17 @@ export default function Navbar({}: Props) {
             console.log(params.toString());
             router.push(pathname + "?" + params.toString());
           }}
-          className="flex items-center gap-1 group"
+          className="flex items-center gap-1 group relative"
         >
           <span>Random</span>
+          <div
+            className="absolute bottom-0 left-0 h-[3px] w-full origin-bottom-right scale-x-0 transform bg-slate-900 transition duration-300 ease-out group-hover:origin-bottom-left group-hover:scale-x-100"
+            style={{
+              backgroundColor: searchParams.get("hex")
+                ? "#" + searchParams.get("hex")
+                : "black",
+            }}
+          />
         </button>
         <button onClick={() => dispatch(changeTheme(!darkMode))}>
           <svg
@@ -55,7 +103,7 @@ export default function Navbar({}: Props) {
             height="20"
             className={
               darkMode
-                ? "dark:fill-white dark:hover:fill-gray-300 dark:active:fill-gray-400 transition"
+                ? "fill-white hover:fill-gray-300 active:fill-gray-400 transition"
                 : "fill-slate-800 hover:fill-slate-900 active:fill-slate-950 transition"
             }
             viewBox="0 0 16 16"

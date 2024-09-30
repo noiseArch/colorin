@@ -1,12 +1,8 @@
-"use client";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useRef } from "react";
-import { AppStore, makeStore } from "@/utils/redux/store";
-import { Provider } from "react-redux";
-import { Metadata } from "next";
+import StoreProvider from "./StoreProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,26 +11,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const storeRef = useRef<AppStore>();
-  if (!storeRef.current) {
-    // Create the store instance the first time this renders
-    storeRef.current = makeStore();
-  }
-
   return (
-    <Provider store={storeRef.current}>
+    <StoreProvider>
       <html lang="en">
-        <head>
-
-        </head>
-        <body
-          className={inter.className + " h-screen flex flex-col  bg-gray-50"}
-        >
+        <head></head>
+        <body className={inter.className + " h-[100dvh] flex flex-col"}>
           <Navbar />
           {children}
           <Footer />
         </body>
       </html>
-    </Provider>
+    </StoreProvider>
   );
 }

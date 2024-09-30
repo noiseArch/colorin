@@ -1,3 +1,4 @@
+"use client"
 import React from "react";
 import { useSelector } from "react-redux";
 
@@ -16,7 +17,7 @@ export default function Footer({}: Props) {
           : "bg-white text-slate-800 drop-shadow-xl w-full h-24 justify-between items-center flex py-4 px-12 transition"
       }
     >
-      <span>Made by valto</span>
+      <span>Made by <a className="underline underline-offset-2 font-bold" href="https://valto.vercel.app/">valto</a></span>
       <div className="flex gap-4 items-center">
         <a href={"https://github.com/"}>
           <svg
