@@ -6,7 +6,7 @@ import { generateSVG } from "@/utils/fns";
 import { Color, TScale } from "@/utils/types";
 import chroma from "chroma-js";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Toaster, toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
@@ -47,43 +47,74 @@ export default function Components({}: Props) {
     },
   });
 
-  useEffect(() => {
-    const getAsyncColor = async () => {
-      const hex = searchParams.get("hex");
-      if (!hex) {
-        router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-        return;
-      }
-      const res: Color | undefined = await genColor(hex);
-      if (!res) {
-        router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-        return;
-      }
-      setColor(res);
-      const newScale = await getColorPaletteFamily(res.hex, res.name);
-      if (newScale === undefined) {
-        router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-        return;
-      }
-      setScale(
-        newScale.palettes.map((v) => {
-          return { hex: v.hexcode, step: v.number };
-        })
-      );
-      setLoadingScale(false);
-    };
-    getAsyncColor();
+  const getAsyncColor = useCallback(async () => {
+    const hex = searchParams.get("hex");
+    if (!hex) {
+      router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
+      return;
+    }
+    const res: Color | undefined = await genColor(hex);
+    if (!res) {
+      router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
+      return;
+    }
+    setColor(res);
+    const newScale = await getColorPaletteFamily(res.hex, res.name);
+    if (newScale === undefined) {
+      router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
+      return;
+    }
+    setScale(
+      newScale.palettes.map((v) => ({
+        hex: v.hexcode,
+        step: v.number,
+      }))
+    );
+    setLoadingScale(false);
   }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    getAsyncColor();
+  }, [getAsyncColor]);
+
+  const mainClassName = useMemo(() => {
+    return darkMode
+      ? "h-full overflow-hidden md:overflow-auto bg-zinc-900 text-white w-full flex md:flex-row flex-col justify-between gap-6 px-12 transition"
+      : "h-full overflow-hidden md:overflow-auto bg-white text-slate-900 w-full flex md:flex-row flex-col justify-between gap-6 px-12 transition";
+  }, [darkMode]);
+
+  const handleSVGGeneration = useCallback(() => {
+    generateSVG(scale.map((c) => c.hex));
+    toast.success("SVG copied to clipboard!");
+  }, [scale]);
+
+  const renderColorScale = useMemo(() => {
+    return scale.map((c, i) => (
+      <div
+        key={i}
+        style={{
+          backgroundColor: c.hex,
+          color:
+            c.hex !== "" && chroma.contrast(c.hex, "white") > 2
+              ? "white"
+              : scale[8]?.hex,
+        }}
+        className="w-full h-14 text-sm rounded-xl flex flex-col items-center justify-center"
+      >
+        <span className={c.hex === color.hex ? "font-bold" : ""}>{c.hex}</span>
+        <span className={c.hex === color.hex ? "font-bold" : ""}>{c.step}</span>
+      </div>
+    ));
+  }, [scale, color.hex]);
+
+  if (loadingScale) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <Toaster richColors position="top-center" />
-      <main
-        className={
-          darkMode
-            ? "h-full overflow-hidden md:overflow-auto bg-zinc-900 text-white w-full flex md:flex-row flex-col justify-between gap-6 px-12 transition"
-            : "h-full overflow-hidden md:overflow-auto bg-white text-slate-900 w-full flex md:flex-row flex-col justify-between gap-6 px-12 transition"
-        }
-      >
+      <main className={mainClassName}>
         {isTWModalOpen && (
           <TailwindModal
             colorName={color.name}
@@ -130,10 +161,7 @@ export default function Components({}: Props) {
                 </svg>
               </button>
               <button
-                onClick={() => {
-                  generateSVG(scale.map((c) => c.hex));
-                  toast.success("SVG copied to clipboard!");
-                }}
+                onClick={handleSVGGeneration}
                 className="md:flex items-center gap-1 group relative hidden"
               >
                 <span
@@ -192,28 +220,7 @@ export default function Components({}: Props) {
               </button>
             </div>
           </div>
-          <div className="w-full flex flex-col gap-2">
-            {scale.map((c, i) => (
-              <div
-                key={i}
-                style={{
-                  backgroundColor: c.hex,
-                  color:
-                    c.hex !== "" && chroma.contrast(c.hex, "white") > 2
-                      ? "white"
-                      : scale[8].hex,
-                }}
-                className="w-full h-14 text-sm rounded-xl flex flex-col items-center justify-center"
-              >
-                <span className={c.hex == color.hex ? "font-bold" : ""}>
-                  {c.hex}
-                </span>
-                <span className={c.hex == color.hex ? "font-bold" : ""}>
-                  {c.step}
-                </span>
-              </div>
-            ))}
-          </div>
+          <div className="w-full flex flex-col gap-2">{renderColorScale}</div>
         </div>
         {!loadingScale && (
           <div className="h-full w-full md:w-2/3 flex flex-col gap-4">

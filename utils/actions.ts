@@ -147,4 +147,3 @@ export async function getColorPaletteFamily(color: string, colorName: string) {
   return colorPaletteFamily;
 }
 export { colorName };
-

@@ -79,10 +79,10 @@ export default function Navbar() {
         </Link>
         <button
           onClick={() => {
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("hex", chroma.random().hex().slice(1));
-            console.log(params.toString());
-            router.push(pathname + "?" + params.toString());
+         /*    const params = new URLSearchParams(searchParams.toString());
+            params.set("hex", );
+            console.log(params.toString()); */
+            router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
           }}
           className="flex items-center gap-1 group relative"
         >
