@@ -1,5 +1,4 @@
 "use server";
-import { TinyColor } from "@ctrl/tinycolor";
 import chroma from "chroma-js";
 import {
   ColorPaletteFamily,
@@ -7,63 +6,6 @@ import {
 } from "./types";
 import defaultPalettes from "../palette.json";
 import { colorName } from "./fns";
-
-export const genColor = (hex: string) => {
-  const colorChroma = hex ? chroma(hex) : undefined;
-  if (!colorChroma) {
-    return;
-  }
-  const tinyColor = new TinyColor(colorChroma.hex());
-  return {
-    name: colorName(colorChroma.hex()) || colorChroma.hex(),
-    hex: colorChroma.hex(),
-    rgb: colorChroma.rgb().toString(),
-    hsl: colorChroma
-      .hsl()
-      .map((num) => Math.round((num + Number.EPSILON) * 100) / 100)
-      .toString()
-      .replaceAll(",", ", "),
-    hsv: colorChroma
-      .hsv()
-      .map((num) => Math.round((num + Number.EPSILON) * 100) / 100)
-      .toString()
-      .replaceAll(",", ", "),
-    hsi: colorChroma
-      .hsi()
-      .map((num) => Math.round((num + Number.EPSILON) * 100) / 100)
-      .toString()
-      .replaceAll(",", ", "),
-    lab: colorChroma
-      .lab()
-      .map((num) => Math.round((num + Number.EPSILON) * 100) / 100)
-      .toString()
-      .replaceAll(",", ", "),
-    cmyk: colorChroma
-      .cmyk()
-      .map((num) => Math.round((num + Number.EPSILON) * 100) / 100)
-      .toString()
-      .replaceAll(",", ", "),
-    gl: colorChroma
-      .gl()
-      .map((num) => Math.round((num + Number.EPSILON) * 100) / 100)
-      .toString()
-      .replaceAll(",", ", "),
-    complementary: {
-      name:
-        colorName(tinyColor.complement().toHexString()) ||
-        tinyColor.complement().toHexString(),
-      hex: tinyColor.complement().toHexString(),
-    },
-    palettes: {
-      analogous: tinyColor.analogous().map((tColor) => tColor.toHexString()),
-      monochromatic: tinyColor
-        .monochromatic()
-        .map((tColor) => tColor.toHexString()),
-      triad: tinyColor.triad().map((tColor) => tColor.toHexString()),
-      tetrad: tinyColor.tetrad().map((tColor) => tColor.toHexString()),
-    },
-  };
-};
 
 export async function getNearestColorPaletteFamily(
   color: string,

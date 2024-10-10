@@ -1,5 +1,5 @@
 "use client";
-import { genColor, getColorPaletteFamily } from "@/utils/actions";
+import { colorName, getColorPaletteFamily } from "@/utils/actions";
 import { Color, TScale } from "@/utils/types";
 import chroma from "chroma-js";
 import React, { useEffect, useState } from "react";
@@ -7,69 +7,64 @@ import Format from "./Format";
 import { TinyColor } from "@ctrl/tinycolor";
 import { useSelector } from "react-redux";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/utils/hooks";
+import { generateNewColor } from "@/utils/redux/colorSlice";
 
 type Props = {};
 
 export default function Main({}: Props) {
+  /* Router hooks */
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const darkMode = useSelector(
-    (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
-  );
+  /* Redux hooks */
+  const dispatch = useAppDispatch();
+  const color = useAppSelector((state) => state.colorSlice.color);
+  const darkMode = useAppSelector((state) => state.darkMode.boolean);
+  /* States */
   const [newColor, setNewColor] = useState("#");
   const [loadingScale, setLoadingScale] = useState<boolean>(true);
   const [scale, setScale] = useState<TScale[]>([]);
-  const [color, setColor] = useState<{
-    data: Color | undefined;
-    error: boolean;
-    msg: string | undefined;
+  const [colorInfo, setColorInfo] = useState<{
+    name: string | undefined;
+    compName: string | undefined;
   }>({
-    error: false,
-    msg: undefined,
-    data: undefined,
+    name: undefined,
+    compName: undefined,
   });
+
+  const paramsHex = searchParams.get("hex");
 
   useEffect(() => {
     const fetchColor = async () => {
       setLoadingScale(true);
-      if (!searchParams.has("hex")) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("hex", chroma.random().hex().slice(1));
-        console.log(params.toString());
-        router.push(pathname + "?" + params.toString());
-      }
-      const hex = searchParams.get("hex") as string;
       try {
-        const res = await genColor(hex);
-        if (!res) throw new Error("Invalid color");
-
-        setColor({ data: res, error: false, msg: undefined });
-        setNewColor(res.hex);
-
-        const newScale = await getColorPaletteFamily(res.hex, res.name);
-        if (!newScale) throw new Error("Failed to generate color palette");
-
-        setScale(
-          newScale.palettes.map((v) => ({ hex: v.hexcode, step: v.number }))
-        );
-      } catch (error) {
-        if (error instanceof Error) {
-          setColor({ data: undefined, error: true, msg: error.message });
-        } else {
-          setColor({
-            data: undefined,
-            error: true,
-            msg: JSON.stringify(error),
-          });
+        if (!color) {
+          dispatch(generateNewColor());
         }
+        if (color) {
+          const name = await colorName(color.hex);
+          console.log(name);
+          const compName = await colorName(color.complementary);
+          const newScale = await getColorPaletteFamily(
+            "#" + color.hex,
+            name || ""
+          );
+          if (!newScale) throw new Error("Failed to generate color palette");
+
+          setScale(
+            newScale.palettes.map((v) => ({ hex: v.hexcode, step: v.number }))
+          );
+          setColorInfo({ name, compName });
+        }
+      } catch (error) {
+        console.log(error);
       } finally {
         setLoadingScale(false);
       }
     };
-
     fetchColor();
-  }, [pathname, router, searchParams]);
+  }, [color, dispatch]);
 
   return (
     <main
@@ -79,15 +74,15 @@ export default function Main({}: Props) {
           : "h-full overflow-hidden md:overflow-auto bg-white text-slate-900 w-full flex flex-col justify-between gap-6 px-6 md:px-12 transition"
       }
     >
-      {color.data == undefined ? (
+      {color == undefined ? (
         <div className="w-full h-full rounded-lg flex flex-col items-center justify-center relative">
           <span className="font-bold text-xl md:text-3xl ">
-            {color.error ? color.msg : "Color undefined"}
+            Color undefined
           </span>
         </div>
       ) : (
         <div
-          style={{ backgroundColor: color.data.hex }}
+          style={{ backgroundColor: "#" + color.hex }}
           className={`w-full h-1/2 md:h-full rounded-lg flex flex-col items-center justify-center relative`}
         >
           <div className="flex absolute top-10 h-8 gap-px">
@@ -142,34 +137,33 @@ export default function Main({}: Props) {
             style={{
               color: loadingScale
                 ? ""
-                : color.data.hex !== "" &&
-                  chroma.contrast(color.data.hex, "white") > 2
+                : color.hex !== "" && chroma.contrast(color.hex, "white") > 2
                 ? scale[2].hex
                 : scale[8].hex,
             }}
             className="font-bold text-xl md:text-3xl absolute "
           >
-            {color.data.name}
+            {colorInfo.name}
           </span>
         </div>
       )}
-      {color.data && (
+      {color && (
         <div className="flex flex-col h-2/3 md:h-1/2 overflow-y-auto md:overflow-hidden md:flex-row gap-6 md:gap-12 w-full items-center">
           <span className="block md:hidden">Scroll to see more!</span>
           <div className="flex md:flex-row flex-col justify-between w-full md:w-1/2 gap-8 items-center">
             <div className="flex flex-col gap-6 w-full md:w-1/3">
-              <Format format={color.data.hex} title="HEX" />
-              <Format format={color.data.rgb} title="RGB" />
-              <Format format={color.data.hsl} title="HSL" />
+              <Format format={color.hex} title="HEX" />
+              <Format format={color.rgb} title="RGB" />
+              <Format format={color.hsl} title="HSL" />
             </div>
             <div className="w-full md:w-1/3 flex flex-col gap-6">
-              <Format format={color.data.hsv} title="HSV" />
-              <Format format={color.data.hsi} title="HSI" />
-              <Format format={color.data.lab} title="LAB" />
+              <Format format={color.hsv} title="HSV" />
+              <Format format={color.hsi} title="HSI" />
+              <Format format={color.lab} title="LAB" />
             </div>
             <div className="w-full md:w-1/3 flex flex-col gap-6">
-              <Format format={color.data.cmyk} title="CMYK" />
-              <Format format={color.data.gl} title="GL" />
+              <Format format={color.cmyk} title="CMYK" />
+              <Format format={color.gl} title="GL" />
               <div className="flex flex-col gap-1">
                 <span
                   className={
@@ -182,7 +176,7 @@ export default function Main({}: Props) {
                 </span>
                 <div className="flex gap-1 items-center group cursor-pointer">
                   <div
-                    style={{ backgroundColor: color.data.complementary.hex }}
+                    style={{ backgroundColor: color.complementary }}
                     className="aspect-square w-1/12 rounded-md"
                   />
                   <span
@@ -192,7 +186,7 @@ export default function Main({}: Props) {
                         : "text-slate-900 w-full font-bold text-xl block group-hover:hidden transition"
                     }
                   >
-                    {color.data.complementary.name}
+                    {colorInfo.compName}
                   </span>
                   <span
                     className={
@@ -201,7 +195,7 @@ export default function Main({}: Props) {
                         : "text-slate-900 w-full font-bold text-xl hidden group-hover:block transition"
                     }
                   >
-                    {color.data.complementary.hex}
+                    {color.complementary}
                   </span>
                 </div>
               </div>
@@ -227,7 +221,7 @@ export default function Main({}: Props) {
             >
               <div className="flex flex-col gap-1 w-full">
                 <span className="font-semibold text-lg ">Analogous</span>
-                {color.data.palettes.analogous.map((color, i) => (
+                {color.palettes.analogous.map((color, i) => (
                   <div
                     key={i}
                     style={{
@@ -247,7 +241,7 @@ export default function Main({}: Props) {
               </div>
               <div className="flex flex-col gap-1 w-full">
                 <span className="font-semibold text-lg">Monochromatic</span>
-                {color.data.palettes.monochromatic.map((color, i) => (
+                {color.palettes.monochromatic.map((color, i) => (
                   <div
                     key={i}
                     style={{
@@ -267,7 +261,7 @@ export default function Main({}: Props) {
               </div>
               <div className="flex flex-col gap-1 w-full">
                 <span className="font-semibold text-lg">Triad</span>
-                {color.data.palettes.triad.map((color, i) => (
+                {color.palettes.triad.map((color, i) => (
                   <div
                     key={i}
                     style={{
@@ -287,7 +281,7 @@ export default function Main({}: Props) {
               </div>
               <div className="flex flex-col gap-1 w-full">
                 <span className="font-semibold text-lg">Tetrad</span>
-                {color.data.palettes.tetrad.map((color, i) => (
+                {color.palettes.tetrad.map((color, i) => (
                   <div
                     key={i}
                     style={{

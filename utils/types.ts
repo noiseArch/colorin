@@ -1,5 +1,4 @@
 export interface Color {
-  name: string;
   hex: string;
   rgb: string;
   hsl: string;
@@ -8,10 +7,7 @@ export interface Color {
   lab: string;
   cmyk: string;
   gl: string;
-  complementary: {
-    name: string;
-    hex: string;
-  };
+  complementary: string;
   palettes: {
     analogous: string[];
     monochromatic: string[];
