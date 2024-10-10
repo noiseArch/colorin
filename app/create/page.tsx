@@ -12,21 +12,28 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import Link from "next/link";
+import { useAppDispatch, useAppSelector } from "@/utils/hooks";
+import { generateNewColor } from "@/utils/redux/colorSlice";
+
+let isFetching = false;
 
 export default function Home() {
+  /* Router Hooks */
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const paramsHex = searchParams.get("hex");
+  /* Redux Hooks */
   const darkMode = useSelector(
     (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
   );
-
+  const dispatch = useAppDispatch();
+  const color = useAppSelector((state) => state.colorSlice.color);
+  /* States */
   const [originalColor, setOGColor] = useState<{ name: string; hex: string }>({
     name: "",
     hex: "",
   });
-
   const [newColor, setNewColor] = useState<{
     name: string;
     hex: string;
@@ -46,18 +53,27 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const getAsyncColor = async () => {
-      const hex = searchParams.get("hex");
-      if (!hex) {
-        router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-        return;
+    const fetchColor = async () => {
+      try {
+        if (!color) {
+          dispatch(
+            generateNewColor(paramsHex ? { hex: paramsHex } : undefined)
+          );
+        }
+        if (color) {
+          if (!paramsHex || (color.hex != paramsHex && !isFetching))
+            router.push(pathname + "?hex=" + color.hex);
+          const name = await colorName(color.hex);
+          if (!name || !paramsHex)
+            return router.push(pathname + "?hex=" + color.hex);
+          setOGColor({ hex: paramsHex, name });
+        }
+      } catch (error) {
+        console.log(error);
       }
-      const color = { hex: "#" + hex, name: colorName(hex) || hex };
-      setOGColor(color);
-      setNewColor(color);
     };
-    getAsyncColor();
-  }, [pathname, router, searchParams]);
+    fetchColor();
+  }, [color, dispatch, paramsHex, pathname, router]);
 
   useEffect(() => {
     const newColor = new TinyColor(originalColor.hex)
@@ -86,7 +102,7 @@ export default function Home() {
     >
       <div className="flex h-full gap-8 items-center">
         <div
-          style={{ backgroundColor: originalColor.hex }}
+          style={{ backgroundColor: "#" + originalColor.hex }}
           className={`w-full h-full rounded-lg flex flex-col gap-3 items-center justify-center`}
         >
           <span
@@ -111,7 +127,7 @@ export default function Home() {
             }}
             className="font-medium text-xl"
           >
-            {originalColor.hex}
+            {"#" + originalColor.hex}
           </span>
         </div>
         <svg
@@ -167,8 +183,14 @@ export default function Home() {
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link
-                    href={"/?hex=" + newColor.hex.slice(1)}
+                  <button
+                    onClick={() => {
+                      isFetching = true;
+                      dispatch(
+                        generateNewColor({ hex: newColor.hex.slice(1) })
+                      );
+                      router.push("/?hex=" + newColor.hex.slice(1));
+                    }}
                     className="flex items-center gap-2 hover:underline"
                   >
                     <svg
@@ -192,7 +214,7 @@ export default function Home() {
                     >
                       <path d="M12.433 10.07C14.133 10.585 16 11.15 16 8a8 8 0 1 0-8 8c1.996 0 1.826-1.504 1.649-3.08-.124-1.101-.252-2.237.351-2.92.465-.527 1.42-.237 2.433.07M8 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m4.5 3a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
                     </svg>
-                  </Link>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="left">
                   <p>Info</p>
@@ -200,8 +222,16 @@ export default function Home() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link
-                    href={"/scale?hex=" + newColor.hex.slice(1)}
+                  <button
+                    onClick={() => {
+                      isFetching = true;
+                      dispatch(
+                        generateNewColor({ hex: newColor.hex.slice(1) })
+                      );
+                      router.push(
+                        "/scale?hex=" + "?hex=" + newColor.hex.slice(1)
+                      );
+                    }}
                     className="flex items-center gap-2 hover:underline"
                   >
                     <svg
@@ -225,7 +255,7 @@ export default function Home() {
                     >
                       <path d="M0 .5A.5.5 0 0 1 .5 0h5a.5.5 0 0 1 .5.5v5.277l4.147-4.131a.5.5 0 0 1 .707 0l3.535 3.536a.5.5 0 0 1 0 .708L10.261 10H15.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H3a3 3 0 0 1-2.121-.879A3 3 0 0 1 0 13.044m6-.21 7.328-7.3-2.829-2.828L6 7.188zM4.5 13a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0M15 15v-4H9.258l-4.015 4zM0 .5v12.495zm0 12.495V13z" />
                     </svg>
-                  </Link>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="left">
                   <p>Scale</p>

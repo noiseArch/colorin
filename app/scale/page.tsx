@@ -1,15 +1,17 @@
 "use client";
 import ContrastGrid from "@/components/ContrastGrid";
 import TailwindModal from "@/components/TailwindModal";
-import { genColor, getColorPaletteFamily } from "@/utils/actions";
-import { generateSVG } from "@/utils/fns";
-import { Color, TScale } from "@/utils/types";
+import { getColorPaletteFamily } from "@/utils/actions";
+import { colorName, generateSVG } from "@/utils/fns";
+import { TScale } from "@/utils/types";
 import chroma from "chroma-js";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Toaster, toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
+import { generateNewColor } from "@/utils/redux/colorSlice";
+import { useAppDispatch, useAppSelector } from "@/utils/hooks";
 
 type Props = {};
 
@@ -20,62 +22,55 @@ export default function Components({}: Props) {
   const darkMode = useSelector(
     (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
   );
-
+  const dispatch = useAppDispatch();
+  const color = useAppSelector((state) => state.colorSlice.color);
   const [isTWModalOpen, setTWModalOpen] = useState<boolean>(false);
   const [isContrastOpen, setContrastOpen] = useState<boolean>(false);
   const [loadingScale, setLoadingScale] = useState<boolean>(true);
   const [scale, setScale] = useState<TScale[]>([]);
-  const [color, setColor] = useState<Color>({
-    name: "",
-    hex: "",
-    rgb: "",
-    hsl: "",
-    hsv: "",
-    hsi: "",
-    lab: "",
-    cmyk: "",
-    gl: "",
-    complementary: {
-      name: "",
-      hex: "",
-    },
-    palettes: {
-      analogous: [],
-      monochromatic: [],
-      triad: [],
-      tetrad: [],
-    },
+  const [colorInfo, setColorInfo] = useState<{
+    name: string | undefined;
+    compName: string | undefined;
+  }>({
+    name: undefined,
+    compName: undefined,
   });
 
-  const getAsyncColor = useCallback(async () => {
-    const hex = searchParams.get("hex");
-    if (!hex) {
-      router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-      return;
-    }
-    const res: Color | undefined = await genColor(hex);
-    if (!res) {
-      router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-      return;
-    }
-    setColor(res);
-    const newScale = await getColorPaletteFamily(res.hex, res.name);
-    if (newScale === undefined) {
-      router.push(pathname + "?hex=" + chroma.random().hex().slice(1));
-      return;
-    }
-    setScale(
-      newScale.palettes.map((v) => ({
-        hex: v.hexcode,
-        step: v.number,
-      }))
-    );
-    setLoadingScale(false);
-  }, [pathname, router, searchParams]);
+  const paramsHex = searchParams.get("hex");
 
   useEffect(() => {
-    getAsyncColor();
-  }, [getAsyncColor]);
+    const fetchColor = async () => {
+      setLoadingScale(true);
+      try {
+        if (!color) {
+          dispatch(
+            generateNewColor(paramsHex ? { hex: paramsHex } : undefined)
+          );
+        }
+        if (color) {
+          if (!paramsHex || color.hex != paramsHex)
+            router.push(pathname + "?hex=" + color.hex);
+          const name = await colorName(color.hex);
+          const compName = await colorName(color.complementary);
+          const newScale = await getColorPaletteFamily(
+            "#" + color.hex,
+            name || ""
+          );
+          if (!newScale) throw new Error("Failed to generate color palette");
+
+          setScale(
+            newScale.palettes.map((v) => ({ hex: v.hexcode, step: v.number }))
+          );
+          setColorInfo({ name, compName });
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoadingScale(false);
+      }
+    };
+    fetchColor();
+  }, [color, dispatch, paramsHex, pathname, router]);
 
   const mainClassName = useMemo(() => {
     return darkMode
@@ -89,6 +84,7 @@ export default function Components({}: Props) {
   }, [scale]);
 
   const renderColorScale = useMemo(() => {
+    if (!color) return <p>Undefined color</p>;
     return scale.map((c, i) => (
       <div
         key={i}
@@ -105,7 +101,7 @@ export default function Components({}: Props) {
         <span className={c.hex === color.hex ? "font-bold" : ""}>{c.step}</span>
       </div>
     ));
-  }, [scale, color.hex]);
+  }, [color, scale]);
 
   if (loadingScale) {
     return <div>Loading...</div>;
@@ -117,16 +113,16 @@ export default function Components({}: Props) {
       <main className={mainClassName}>
         {isTWModalOpen && (
           <TailwindModal
-            colorName={color.name}
-            color={color.hex}
+            colorName={colorInfo.name || ""}
+            color={color ? color.hex : ""}
             isModalOpen
             setModalOpen={setTWModalOpen}
           />
         )}
         {isContrastOpen && (
           <ContrastGrid
-            colorName={color.name}
-            color={color.hex}
+            colorName={colorInfo.name || ""}
+            color={color ? color.hex : ""}
             isModalOpen
             scale={scale}
             setModalOpen={setContrastOpen}
@@ -225,7 +221,7 @@ export default function Components({}: Props) {
         {!loadingScale && (
           <div className="h-full w-full md:w-2/3 flex flex-col gap-4">
             <h2 className="font-medium text-3xl w-full text-center md:text-left">
-              {color.name}
+              {colorInfo.name}
             </h2>
             <div className="flex md:flex-row flex-col gap-4 md:h-1/2 w-full">
               <div

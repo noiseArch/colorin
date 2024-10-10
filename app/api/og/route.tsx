@@ -1,4 +1,4 @@
-import { genColor, getColorPaletteFamily } from "@/utils/actions";
+import { colorName, getColorPaletteFamily } from "@/utils/actions";
 import { Color, ColorPaletteNumber } from "@/utils/types";
 import { contrast } from "chroma-js";
 import { ImageResponse } from "next/og";
@@ -8,11 +8,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const hex = searchParams.get("hex");
     if (!hex) throw Error("Failed to fetch color from URL.");
-    const color: Color | undefined = await genColor(hex);
-    if (!color) throw Error("Failed to fetch color from URL.");
+    const name: string | undefined = await colorName(hex);
+    if (!name) throw Error("Failed to fetch color from URL.");
 
     const scale: { hex: string; step: ColorPaletteNumber }[] = (
-      await getColorPaletteFamily(color.hex, color.name)
+      await getColorPaletteFamily(hex, name)
     ).palettes.map((v) => {
       return { hex: v.hexcode, step: v.number };
     });
@@ -23,14 +23,13 @@ export async function GET(req: Request) {
           tw="flex w-full h-full text-center items-center justify-center flex-col gap-[12px]"
           style={{
             fontSize: 42,
-            background: color.hex,
-            color:
-              contrast(color.hex, "white") > 2 ? scale[2].hex : scale[8].hex,
+            background: hex,
+            color: contrast(hex, "white") > 2 ? scale[2].hex : scale[8].hex,
             fontWeight: 700,
           }}
         >
-          <span>{color.name}</span>
-          <span>{color.hex}</span>
+          <span>{name}</span>
+          <span>{hex}</span>
         </div>
       ),
       {

@@ -1,18 +1,15 @@
 "use client";
-import { useAppDispatch } from "@/utils/hooks";
+import { useAppDispatch, useAppSelector } from "@/utils/hooks";
 import { generateNewColor } from "@/utils/redux/colorSlice";
 import { changeTheme } from "@/utils/redux/darkModeSlice";
-import chroma from "chroma-js";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
-  const darkMode = useSelector(
-    (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
-  );
+  const darkMode = useAppSelector((state) => state.darkMode.boolean);
+  const color = useAppSelector((state) => state.colorSlice.color);
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -81,7 +78,10 @@ export default function Navbar() {
           />
         </Link>
         <button
-          onClick={() => dispatch(generateNewColor())}
+          onClick={() => {
+            dispatch(generateNewColor());
+            router.push(pathname + "?hex=" + color?.hex);
+          }}
           className="flex items-center gap-1 group relative"
         >
           <span>Random</span>

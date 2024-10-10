@@ -40,11 +40,14 @@ export default function Main({}: Props) {
       setLoadingScale(true);
       try {
         if (!color) {
-          dispatch(generateNewColor());
+          dispatch(
+            generateNewColor(paramsHex ? { hex: paramsHex } : undefined)
+          );
         }
         if (color) {
+          if (!paramsHex || color.hex != paramsHex)
+            router.push(pathname + "?hex=" + color.hex);
           const name = await colorName(color.hex);
-          console.log(name);
           const compName = await colorName(color.complementary);
           const newScale = await getColorPaletteFamily(
             "#" + color.hex,
@@ -64,7 +67,7 @@ export default function Main({}: Props) {
       }
     };
     fetchColor();
-  }, [color, dispatch]);
+  }, [color, dispatch, paramsHex, pathname, router]);
 
   return (
     <main
