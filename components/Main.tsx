@@ -1,14 +1,16 @@
 "use client";
-import { colorName, getColorPaletteFamily } from "@/utils/actions";
+import { getColorPaletteFamily } from "@/utils/fns";
 import { Color, TScale } from "@/utils/types";
 import chroma from "chroma-js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Format from "./Format";
 import { TinyColor } from "@ctrl/tinycolor";
 import { useSelector } from "react-redux";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/utils/hooks";
 import { generateNewColor } from "@/utils/redux/colorSlice";
+import { LoaderCircle } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {};
 
@@ -22,22 +24,26 @@ export default function Main({}: Props) {
   const color = useAppSelector((state) => state.colorSlice.color);
   const darkMode = useAppSelector((state) => state.darkMode.boolean);
   /* States */
-  const [newColor, setNewColor] = useState("#");
+  const [inputColor, setInputColor] = useState("#");
   const [loadingScale, setLoadingScale] = useState<boolean>(true);
-  const [scale, setScale] = useState<TScale[]>([]);
   const [colorInfo, setColorInfo] = useState<{
     name: string | undefined;
     compName: string | undefined;
+    darkenHex: string | undefined;
+    lightenHex: string | undefined;
   }>({
     name: undefined,
     compName: undefined,
+    darkenHex: undefined,
+    lightenHex: undefined,
   });
 
   const paramsHex = searchParams.get("hex");
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    setLoadingScale(true);
     const fetchColor = async () => {
-      setLoadingScale(true);
       try {
         if (!color) {
           dispatch(
@@ -45,262 +51,362 @@ export default function Main({}: Props) {
           );
         }
         if (color) {
-          if (!paramsHex || color.hex != paramsHex)
-            router.push(pathname + "?hex=" + color.hex);
-          const name = await colorName(color.hex);
-          const compName = await colorName(color.complementary);
-          const newScale = await getColorPaletteFamily(
-            "#" + color.hex,
-            name || ""
+          const res = await fetch(
+            `https://api.color.pizza/v1/?values=${color.hex}`
           );
-          if (!newScale) throw new Error("Failed to generate color palette");
-
-          setScale(
-            newScale.palettes.map((v) => ({ hex: v.hexcode, step: v.number }))
-          );
-          setColorInfo({ name, compName });
+          const resJson = await res.json();
+          const name = resJson.paletteTitle;
+          const compName = resJson.paletteTitle;
+          const darkenHex = new TinyColor(color.hex).lighten(40).toHexString();
+          const lightenHex = new TinyColor(color.hex).darken(40).toHexString();
+          setInputColor("#" + color.hex);
+          setColorInfo({ name, compName, darkenHex, lightenHex });
         }
+        setLoadingScale(false);
       } catch (error) {
         console.log(error);
-      } finally {
-        setLoadingScale(false);
       }
     };
-    fetchColor();
-  }, [color, dispatch, paramsHex, pathname, router]);
+
+    if (!color) {
+      dispatch(generateNewColor(paramsHex ? { hex: paramsHex } : undefined));
+    } else {
+      timeoutId = setTimeout(() => {
+        fetchColor();
+      }, 1000);
+    }
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [color, dispatch, paramsHex]);
 
   return (
     <main
       className={
         darkMode
-          ? "h-full overflow-hidden md:overflow-auto bg-zinc-900 text-white w-full flex flex-col justify-between gap-6 px-6 md:px-12 transition"
-          : "h-full overflow-hidden md:overflow-auto bg-white text-slate-900 w-full flex flex-col justify-between gap-6 px-6 md:px-12 transition"
-      }
-    >
+          ? "h-full md:flex-row flex-col overflow-hidden bg-neutral-900 text-white w-full flex gap-6 px-6 md:px-12 transition"
+          : "h-full md:flex-row flex-col overflow-hidden  bg-white text-slate-900 w-full flex gap-6 px-6 md:px-12 transition"
+      }>
       {color == undefined ? (
         <div className="w-full h-full rounded-lg flex flex-col items-center justify-center relative">
-          <span className="font-bold text-xl md:text-3xl ">
-            Color undefined
-          </span>
+          <LoaderCircle width={30} height={30} className="animate-spin " />
         </div>
       ) : (
         <div
-          style={{ backgroundColor: "#" + color.hex }}
-          className={`w-full h-1/2 md:h-full rounded-lg flex flex-col items-center justify-center relative`}
-        >
-          <div className="flex absolute top-10 h-8 gap-px">
-            <input
-              style={{
-                color: loadingScale
-                  ? "transparent"
-                  : chroma.contrast(scale[2].hex, scale[8].hex) > 2
-                  ? scale[2].hex
-                  : scale[9].hex,
-                backgroundColor: loadingScale ? "transparent" : scale[8].hex,
-              }}
-              onChange={(e) => {
-                if (!e.target.value || e.target.value == "") return;
-                setNewColor(e.target.value);
-              }}
-              value={newColor}
-              className="font-medium text-sm md:text-xl h-full rounded-l rounded-y outline-none p-1"
-            />
-            <button
-              style={{
-                color: loadingScale
-                  ? "transparent"
-                  : chroma.contrast(scale[2].hex, scale[8].hex) > 2
-                  ? scale[2].hex
-                  : scale[2].hex,
-                backgroundColor: loadingScale ? "transparent" : scale[8].hex,
-              }}
-              onClick={() => {
-                const color22 = new TinyColor(newColor);
-                if (!color22.isValid) return;
-                router.replace("/?hex=" + color22.toHex());
-              }}
-              className="h-full p-1 rounded-r"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                fill="currentColor"
-                className="bi bi-arrow-right"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"
+          style={{
+            backgroundColor: "#" + color.hex,
+            animation: loadingScale
+              ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+              : "",
+          }}
+          className={`w-full max-w-1/2 h-fit md:h-full py-8 rounded-lg flex items-center justify-center relative`}>
+          {loadingScale ? (
+            <LoaderCircle width={30} height={30} className="animate-spin " />
+          ) : (
+            <div className="flex flex-col items-center md:gap-0 gap-8 justify-around h-full w-full">
+              <div className="flex top-10 h-8 gap-px">
+                <input
+                  style={{
+                    color: loadingScale
+                      ? "transparent"
+                      : color && chroma.contrast(color.hex, "white") > 2
+                      ? colorInfo.lightenHex
+                      : colorInfo.darkenHex,
+                    backgroundColor: loadingScale
+                      ? "transparent"
+                      : color && chroma.contrast(color.hex, "white") > 2
+                      ? colorInfo.darkenHex
+                      : colorInfo.lightenHex,
+                  }}
+                  onChange={(e) => {
+                    if (!e.target.value || e.target.value == "") return;
+                    setInputColor(e.target.value);
+                  }}
+                  value={inputColor}
+                  className="font-medium text-sm md:text-lg h-full rounded-l rounded-y outline-none py-3 px-2"
                 />
-              </svg>
-            </button>
-          </div>
-          <span
-            style={{
-              color: loadingScale
-                ? ""
-                : color.hex !== "" && chroma.contrast(color.hex, "white") > 2
-                ? scale[2].hex
-                : scale[8].hex,
-            }}
-            className="font-bold text-xl md:text-3xl absolute "
-          >
-            {colorInfo.name}
-          </span>
+                <button
+                  style={{
+                    color:
+                      color && chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.lightenHex
+                        : colorInfo.darkenHex,
+                    backgroundColor:
+                      color && chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.darkenHex
+                        : colorInfo.lightenHex,
+                  }}
+                  onMouseOver={({ currentTarget }) =>
+                    (currentTarget.style.backgroundColor = new TinyColor(
+                      currentTarget.style.backgroundColor
+                    )
+                      .darken(20)
+                      .toHexString())
+                  }
+                  onMouseOut={({ currentTarget }) =>
+                    (currentTarget.style.backgroundColor =
+                      chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.darkenHex!
+                        : colorInfo.lightenHex!)
+                  }
+                  onClick={() => {
+                    const color22 = new TinyColor(inputColor);
+                    if (!color22.isValid) return;
+                    dispatch(generateNewColor({ hex: color22.toHex() }));
+                  }}
+                  className="h-full p-1 rounded-r transition-all">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    className="bi bi-arrow-right"
+                    viewBox="0 0 16 16">
+                    <path
+                      fill-rule="evenodd"
+                      d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <span
+                style={{
+                  color:
+                    color && chroma.contrast(color.hex, "white") > 2
+                      ? colorInfo.darkenHex
+                      : colorInfo.lightenHex,
+                }}
+                className={"font-bold text-xl md:text-3xl"}>
+                {colorInfo.name}
+              </span>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText("#" + color.hex);
+                    toast.success("HEX code copied to clipboard!");
+                  }}
+                  style={{
+                    fill:
+                      color && chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.lightenHex
+                        : colorInfo.darkenHex,
+                    backgroundColor:
+                      color && chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.darkenHex
+                        : colorInfo.lightenHex,
+                  }}
+                  onMouseOver={({ currentTarget }) =>
+                    (currentTarget.style.backgroundColor = new TinyColor(
+                      currentTarget.style.backgroundColor
+                    )
+                      .darken(20)
+                      .toHexString())
+                  }
+                  onMouseOut={({ currentTarget }) =>
+                    (currentTarget.style.backgroundColor = new TinyColor(
+                      currentTarget.style.backgroundColor
+                    )
+                      .lighten(20)
+                      .toHexString())
+                  }
+                  className="p-3 rounded-xl transition-all">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 16 16">
+                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      window.location.protocol +
+                        "//" +
+                        window.location.host +
+                        window.location.pathname +
+                        `?hex=${color.hex}`
+                    );
+                    toast.success("Share link copied to clipboard!");
+                  }}
+                  style={{
+                    fill:
+                      color && chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.lightenHex
+                        : colorInfo.darkenHex,
+                    backgroundColor:
+                      color && chroma.contrast(color.hex, "white") > 2
+                        ? colorInfo.darkenHex
+                        : colorInfo.lightenHex,
+                  }}
+                  onMouseOver={({ currentTarget }) =>
+                    (currentTarget.style.backgroundColor = new TinyColor(
+                      currentTarget.style.backgroundColor
+                    )
+                      .darken(20)
+                      .toHexString())
+                  }
+                  onMouseOut={({ currentTarget }) =>
+                    (currentTarget.style.backgroundColor = new TinyColor(
+                      currentTarget.style.backgroundColor
+                    )
+                      .lighten(20)
+                      .toHexString())
+                  }
+                  className="p-3 rounded-xl transition-all">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 16 16">
+                    <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z" />
+                    <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {color && (
-        <div className="flex flex-col h-2/3 md:h-1/2 overflow-y-auto md:overflow-hidden md:flex-row gap-6 md:gap-12 w-full items-center">
-          <span className="block md:hidden">Scroll to see more!</span>
-          <div className="flex md:flex-row flex-col justify-between w-full md:w-1/2 gap-8 items-center">
-            <div className="flex flex-col gap-6 w-full md:w-1/3">
-              <Format format={color.hex} title="HEX" />
-              <Format format={color.rgb} title="RGB" />
-              <Format format={color.hsl} title="HSL" />
+        <div className="flex flex-col text-nowrap overflow-y-auto w-full gap-2 lg:gap-12">
+          <div className="flex lg:flex-row flex-col w-full gap-2 xl:gap-12 items-center">
+            <div className="flex flex-col justify-start gap-2 lg:gap-6 w-full xl:w-1/3">
+              <Format content={"#" + color.hex} title="HEX" />
+              <Format content={color.rgb} title="RGB" />
+              <Format content={color.hsl} title="HSL" />
+              <Format content={color.gl} title="GL" className="xl:hidden" />
             </div>
-            <div className="w-full md:w-1/3 flex flex-col gap-6">
-              <Format format={color.hsv} title="HSV" />
-              <Format format={color.hsi} title="HSI" />
-              <Format format={color.lab} title="LAB" />
-            </div>
-            <div className="w-full md:w-1/3 flex flex-col gap-6">
-              <Format format={color.cmyk} title="CMYK" />
-              <Format format={color.gl} title="GL" />
-              <div className="flex flex-col gap-1">
-                <span
-                  className={
-                    darkMode
-                      ? "text-gray-400 transition"
-                      : "text-slate-900 transition"
-                  }
-                >
-                  Complementary Color
-                </span>
-                <div className="flex gap-1 items-center group cursor-pointer">
-                  <div
-                    style={{ backgroundColor: color.complementary }}
-                    className="aspect-square w-1/12 rounded-md"
-                  />
-                  <span
-                    className={
-                      darkMode
-                        ? "text-white w-full font-bold text-xl block group-hover:hidden transition"
-                        : "text-slate-900 w-full font-bold text-xl block group-hover:hidden transition"
-                    }
-                  >
-                    {colorInfo.compName}
-                  </span>
-                  <span
-                    className={
-                      darkMode
-                        ? "text-white w-full font-bold text-xl hidden group-hover:block transition"
-                        : "text-slate-900 w-full font-bold text-xl hidden group-hover:block transition"
-                    }
-                  >
-                    {color.complementary}
-                  </span>
-                </div>
-              </div>
+            <div className="w-full items-start xl:w-1/3 flex flex-col gap-2 lg:gap-6">
+              <Format content={color.hsv} title="HSV" />
+              <Format content={color.hsi} title="HSI" />
+              <Format content={color.lab} title="LAB" />
+              <Format content={color.cmyk} title="CMYK" className="xl:hidden" />
             </div>
           </div>
-          <hr className="h-full w-px border border-slate-950 hidden md:block" />
-          <div className="flex flex-col gap-2 w-full md:w-1/2">
+
+          <div className="flex flex-col gap-1">
             <span
               className={
                 darkMode
                   ? "text-gray-400 transition"
                   : "text-slate-900 transition"
-              }
-            >
+              }>
+              Complementary Color
+            </span>
+            <div className="flex gap-1 items-center">
+              <div
+                style={{ backgroundColor: color.complementary }}
+                className="aspect-square w-8 rounded-md"
+              />
+              <span
+                className={
+                  darkMode
+                    ? "text-white w-full font-bold text-xl transition"
+                    : "text-slate-900 w-full font-bold text-xl transition"
+                }>
+                {color.complementary}
+              </span>
+            </div>
+          </div>
+          <hr className="h-px w-full border border-neutral-300" />
+          <div className="flex flex-col gap-2 w-full h-1/2">
+            <span
+              className={
+                darkMode
+                  ? "text-gray-400 transition"
+                  : "text-slate-900 transition"
+              }>
               PALETTES
             </span>
             <div
               className={
                 darkMode
-                  ? "flex flex-col md:flex-row gap-2 w-full text-gray-300 transition"
-                  : "flex flex-col md:flex-row gap-2 w-full text-slate-700 transition"
-              }
-            >
-              <div className="flex flex-col gap-1 w-full">
-                <span className="font-semibold text-lg ">Analogous</span>
-                {color.palettes.analogous.map((color, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: color,
-                      color:
-                        chroma.contrast(color, "white") > 2
-                          ? "white"
-                          : "rgb(15 23 42)",
-                    }}
-                    className="p-1 rounded group flex items-center justify-center"
-                  >
-                    <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
-                      {color}
-                    </span>
-                  </div>
-                ))}
+                  ? "flex flex-col xl:flex-row gap-2 w-full text-gray-300 transition"
+                  : "flex flex-col xl:flex-row gap-2 w-full text-slate-700 transition"
+              }>
+              <div className="flex gap-1 w-full xl:w-1/2">
+                <div className="flex flex-col gap-1 w-1/2">
+                  <span className="font-semibold text-lg ">Analogous</span>
+                  {color.palettes.analogous.map((color, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: color,
+                        color:
+                          chroma.contrast(color, "white") > 2
+                            ? "white"
+                            : "rgb(15 23 42)",
+                      }}
+                      className="p-1 rounded group flex items-center justify-center">
+                      <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                        {color}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-1 w-1/2">
+                  <span className="font-semibold text-lg">Monochromatic</span>
+                  {color.palettes.monochromatic.map((color, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: color,
+                        color:
+                          chroma.contrast(color, "white") > 2
+                            ? "white"
+                            : "rgb(15 23 42)",
+                      }}
+                      className="p-1 rounded group flex items-center justify-center">
+                      <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                        {color}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-col gap-1 w-full">
-                <span className="font-semibold text-lg">Monochromatic</span>
-                {color.palettes.monochromatic.map((color, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: color,
-                      color:
-                        chroma.contrast(color, "white") > 2
-                          ? "white"
-                          : "rgb(15 23 42)",
-                    }}
-                    className="p-1 rounded group flex items-center justify-center"
-                  >
-                    <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
-                      {color}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1 w-full">
-                <span className="font-semibold text-lg">Triad</span>
-                {color.palettes.triad.map((color, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: color,
-                      color:
-                        chroma.contrast(color, "white") > 2
-                          ? "white"
-                          : "rgb(15 23 42)",
-                    }}
-                    className="p-1 rounded group flex items-center justify-center"
-                  >
-                    <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
-                      {color}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1 w-full">
-                <span className="font-semibold text-lg">Tetrad</span>
-                {color.palettes.tetrad.map((color, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: color,
-                      color:
-                        chroma.contrast(color, "white") > 2
-                          ? "white"
-                          : "rgb(15 23 42)",
-                    }}
-                    className="p-1 rounded group flex items-center justify-center"
-                  >
-                    <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
-                      {color}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex gap-1 xl:w-1/2">
+                <div className="flex flex-col gap-1 w-1/2">
+                  <span className="font-semibold text-lg">Triad</span>
+                  {color.palettes.triad.map((color, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: color,
+                        color:
+                          chroma.contrast(color, "white") > 2
+                            ? "white"
+                            : "rgb(15 23 42)",
+                      }}
+                      className="p-1 rounded group flex items-center justify-center">
+                      <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                        {color}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-1 w-1/2">
+                  <span className="font-semibold text-lg">Tetrad</span>
+                  {color.palettes.tetrad.map((color, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: color,
+                        color:
+                          chroma.contrast(color, "white") > 2
+                            ? "white"
+                            : "rgb(15 23 42)",
+                      }}
+                      className="p-1 rounded group flex items-center justify-center">
+                      <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                        {color}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

@@ -1,32 +1,43 @@
-import { colorName } from "@/utils/fns";
-import { TinyColor } from "@ctrl/tinycolor";
-import chroma from "chroma-js";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useCallback, useRef } from "react";
 import { useSelector } from "react-redux";
 
 type Props = {
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   color: { hex: string; name: string };
   title: string;
+  disabled?: boolean;
 };
 
-export default function Range({ onChange, color, title }: Props) {
+export default function Range({ onChange, color, title, disabled }: Props) {
   const darkMode = useSelector(
     (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
   );
 
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedHandleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        onChange(e);
+      }, 500);
+    },
+    [onChange]
+  );
+
   return (
     <div className="flex flex-col gap-1">
-      <span className={darkMode ? "text-white" : "text-slate-900"}>{title}</span>
-      <style jsx>{`
-        .inputRange {
-          background-color: "${color}";
-        }
-      `}</style>
+      <span className={darkMode ? "text-white" : "text-slate-900"}>
+        {title}
+      </span>
       <input
-        onChange={onChange}
-        style={{ accentColor: color.hex }}
-        className={"inputRange"}
+        disabled={disabled}
+        onChange={debouncedHandleChange}
+        style={{ accentColor: color.hex, backgroundColor: color.hex }}
+        className="rangeInput"
         type="range"
         step={1}
         defaultValue={0}

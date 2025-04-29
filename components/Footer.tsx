@@ -13,8 +13,8 @@ export default function Footer({}: Props) {
     <footer
       className={
         darkMode
-          ? "bg-zinc-900 text-white drop-shadow-xl w-full h-24 justify-between items-center flex py-4 px-12 transition"
-          : "bg-white text-slate-800 drop-shadow-xl w-full h-24 justify-between items-center flex py-4 px-12 transition"
+          ? "bg-neutral-900 text-white drop-shadow-xl w-full h-24 justify-between items-center flex px-6 md:px-12 py-6 transition"
+          : "bg-white text-slate-800 drop-shadow-xl w-full h-24 justify-between items-center flex px-6 md:px-12 py-6 transition"
       }
     >
       <span>Made by <a className="underline underline-offset-2 font-bold" href="https://valto.vercel.app/">valto</a></span>

@@ -6,7 +6,7 @@ import chroma from "chroma-js";
 const initialState: { color: Color | undefined } = {
   color: undefined,
 };
-
+// TODO: Ahorrate un par de API calls guardando el nombre del color 
 const colorSlice = createSlice({
   name: "color",
   initialState,
@@ -59,7 +59,6 @@ const colorSlice = createSlice({
         },
       };
       state.color = color;
-      console.log(state.color)
     },
   },
 });

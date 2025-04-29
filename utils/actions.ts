@@ -5,7 +5,6 @@ import {
   ColorPaletteFamilyWithNearestPalette,
 } from "./types";
 import defaultPalettes from "../palette.json";
-import { colorName } from "./fns";
 
 export async function getNearestColorPaletteFamily(
   color: string,
@@ -86,6 +85,6 @@ export async function getColorPaletteFamily(color: string, colorName: string) {
       };
     }),
   };
+  console.log(colorPaletteFamily)
   return colorPaletteFamily;
 }
-export { colorName };
