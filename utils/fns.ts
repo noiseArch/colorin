@@ -51,7 +51,7 @@ export function getNearestColorPaletteFamily(
   return paletteFamily;
 }
 
-export function getColorPaletteFamily(color: string, colorName: string) {
+export function getColorPaletteFamily(color: string) {
   const c1 = chroma(color).hsl();
 
   const { nearestLightnessPalette, palettes } =
@@ -65,7 +65,7 @@ export function getColorPaletteFamily(color: string, colorName: string) {
   const deltaH = c1[0] - c2[0] || c2[0];
   const sRatio = c1[1] / c2[1];
   const colorPaletteFamily: ColorPaletteFamily = {
-    key: colorName,
+    key: "",
     palettes: palettes.map((palette) => {
       let hexValue = color;
       const isSame = number === palette.number;
@@ -78,9 +78,9 @@ export function getColorPaletteFamily(color: string, colorName: string) {
       }
 
       return {
+        name: "",
         hexcode: hexValue,
         number: palette.number,
-        name: colorName || hexValue,
       };
     }),
   };
@@ -110,7 +110,7 @@ export const generateSVG = (scale: string[]) => {
 };
 
 export const generateTailwind = async (hex: string, name: string) => {
-  const colorScale = await getColorPaletteFamily(hex, name);
+  const colorScale = await getColorPaletteFamily(hex);
   const formats = {
     hex:
       `'${name.toLowerCase().replaceAll(" ", "-")}': {\n` +
@@ -157,7 +157,7 @@ export const generateTailwind = async (hex: string, name: string) => {
   return formats;
 };
 export const generateSCSS = async (hex: string, name: string) => {
-  const colorScale = await getColorPaletteFamily(hex, name);
+  const colorScale = await getColorPaletteFamily(hex);
   const formats = {
     hex: colorScale.palettes
       .map(
@@ -201,7 +201,7 @@ export const generateSCSS = async (hex: string, name: string) => {
   return formats;
 };
 export const generateCSS = async (hex: string, name: string) => {
-  const colorScale = await getColorPaletteFamily(hex, name);
+  const colorScale = await getColorPaletteFamily(hex);
   const formats = {
     hex: colorScale.palettes
       .map(

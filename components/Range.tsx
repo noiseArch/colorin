@@ -3,12 +3,12 @@ import { useSelector } from "react-redux";
 
 type Props = {
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  color: { hex: string; name: string };
+  hex: string;
   title: string;
   disabled?: boolean;
 };
 
-export default function Range({ onChange, color, title, disabled }: Props) {
+export default function Range({ onChange, hex, title, disabled }: Props) {
   const darkMode = useSelector(
     (state: { darkMode: { boolean: boolean } }) => state.darkMode.boolean
   );
@@ -36,7 +36,7 @@ export default function Range({ onChange, color, title, disabled }: Props) {
       <input
         disabled={disabled}
         onChange={debouncedHandleChange}
-        style={{ accentColor: color.hex, backgroundColor: color.hex }}
+        style={{ accentColor: hex, backgroundColor: hex }}
         className="rangeInput"
         type="range"
         step={1}

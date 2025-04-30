@@ -8,7 +8,7 @@ import { TinyColor } from "@ctrl/tinycolor";
 import { useSelector } from "react-redux";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/utils/hooks";
-import { generateNewColor } from "@/utils/redux/colorSlice";
+import { generateNewColor, setColorName } from "@/utils/redux/colorSlice";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,9 +16,7 @@ type Props = {};
 
 export default function Main({}: Props) {
   /* Router hooks */
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   /* Redux hooks */
   const dispatch = useAppDispatch();
   const color = useAppSelector((state) => state.colorSlice.color);
@@ -27,13 +25,9 @@ export default function Main({}: Props) {
   const [inputColor, setInputColor] = useState("#");
   const [loadingScale, setLoadingScale] = useState<boolean>(true);
   const [colorInfo, setColorInfo] = useState<{
-    name: string | undefined;
-    compName: string | undefined;
     darkenHex: string | undefined;
     lightenHex: string | undefined;
   }>({
-    name: undefined,
-    compName: undefined,
     darkenHex: undefined,
     lightenHex: undefined,
   });
@@ -45,23 +39,19 @@ export default function Main({}: Props) {
     setLoadingScale(true);
     const fetchColor = async () => {
       try {
-        if (!color) {
-          dispatch(
-            generateNewColor(paramsHex ? { hex: paramsHex } : undefined)
-          );
-        }
-        if (color) {
+        if(!color) return toast.error("Color is undefined")
+        const darkenHex = new TinyColor(color.hex).lighten(40).toHexString();
+        const lightenHex = new TinyColor(color.hex).darken(40).toHexString();
+        setInputColor("#" + color.hex);
+        setColorInfo({ darkenHex, lightenHex });
+        if (!color.name) {
           const res = await fetch(
             `https://api.color.pizza/v1/?values=${color.hex}`
           );
           const resJson = await res.json();
-          const name = resJson.paletteTitle;
-          const compName = resJson.paletteTitle;
-          const darkenHex = new TinyColor(color.hex).lighten(40).toHexString();
-          const lightenHex = new TinyColor(color.hex).darken(40).toHexString();
-          setInputColor("#" + color.hex);
-          setColorInfo({ name, compName, darkenHex, lightenHex });
+          dispatch(setColorName({ name: resJson.paletteTitle }));
         }
+
         setLoadingScale(false);
       } catch (error) {
         console.log(error);
@@ -88,7 +78,8 @@ export default function Main({}: Props) {
         darkMode
           ? "h-full md:flex-row flex-col overflow-hidden bg-neutral-900 text-white w-full flex gap-6 px-6 md:px-12 transition"
           : "h-full md:flex-row flex-col overflow-hidden  bg-white text-slate-900 w-full flex gap-6 px-6 md:px-12 transition"
-      }>
+      }
+    >
       {color == undefined ? (
         <div className="w-full h-full rounded-lg flex flex-col items-center justify-center relative">
           <LoaderCircle width={30} height={30} className="animate-spin " />
@@ -101,7 +92,8 @@ export default function Main({}: Props) {
               ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
               : "",
           }}
-          className={`w-full max-w-1/2 h-fit md:h-full py-8 rounded-lg flex items-center justify-center relative`}>
+          className={`w-full max-w-1/2 h-fit md:h-full py-8 rounded-lg flex items-center justify-center relative`}
+        >
           {loadingScale ? (
             <LoaderCircle width={30} height={30} className="animate-spin " />
           ) : (
@@ -156,14 +148,16 @@ export default function Main({}: Props) {
                     if (!color22.isValid) return;
                     dispatch(generateNewColor({ hex: color22.toHex() }));
                   }}
-                  className="h-full p-1 rounded-r transition-all">
+                  className="h-full p-1 rounded-r transition-all"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
                     height="20"
                     fill="currentColor"
                     className="bi bi-arrow-right"
-                    viewBox="0 0 16 16">
+                    viewBox="0 0 16 16"
+                  >
                     <path
                       fill-rule="evenodd"
                       d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"
@@ -178,8 +172,9 @@ export default function Main({}: Props) {
                       ? colorInfo.darkenHex
                       : colorInfo.lightenHex,
                 }}
-                className={"font-bold text-xl md:text-3xl"}>
-                {colorInfo.name}
+                className={"font-bold text-xl md:text-3xl"}
+              >
+                {color.name}
               </span>
               <div className="flex items-center gap-4">
                 <button
@@ -211,12 +206,14 @@ export default function Main({}: Props) {
                       .lighten(20)
                       .toHexString())
                   }
-                  className="p-3 rounded-xl transition-all">
+                  className="p-3 rounded-xl transition-all"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
                     height="20"
-                    viewBox="0 0 16 16">
+                    viewBox="0 0 16 16"
+                  >
                     <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
                     <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
                   </svg>
@@ -256,12 +253,14 @@ export default function Main({}: Props) {
                       .lighten(20)
                       .toHexString())
                   }
-                  className="p-3 rounded-xl transition-all">
+                  className="p-3 rounded-xl transition-all"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
                     height="20"
-                    viewBox="0 0 16 16">
+                    viewBox="0 0 16 16"
+                  >
                     <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z" />
                     <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z" />
                   </svg>
@@ -294,7 +293,8 @@ export default function Main({}: Props) {
                 darkMode
                   ? "text-gray-400 transition"
                   : "text-slate-900 transition"
-              }>
+              }
+            >
               Complementary Color
             </span>
             <div className="flex gap-1 items-center">
@@ -307,7 +307,8 @@ export default function Main({}: Props) {
                   darkMode
                     ? "text-white w-full font-bold text-xl transition"
                     : "text-slate-900 w-full font-bold text-xl transition"
-                }>
+                }
+              >
                 {color.complementary}
               </span>
             </div>
@@ -319,7 +320,8 @@ export default function Main({}: Props) {
                 darkMode
                   ? "text-gray-400 transition"
                   : "text-slate-900 transition"
-              }>
+              }
+            >
               PALETTES
             </span>
             <div
@@ -327,7 +329,8 @@ export default function Main({}: Props) {
                 darkMode
                   ? "flex flex-col xl:flex-row gap-2 w-full text-gray-300 transition"
                   : "flex flex-col xl:flex-row gap-2 w-full text-slate-700 transition"
-              }>
+              }
+            >
               <div className="flex gap-1 w-full xl:w-1/2">
                 <div className="flex flex-col gap-1 w-1/2">
                   <span className="font-semibold text-lg ">Analogous</span>
@@ -341,7 +344,8 @@ export default function Main({}: Props) {
                             ? "white"
                             : "rgb(15 23 42)",
                       }}
-                      className="p-1 rounded group flex items-center justify-center">
+                      className="p-1 rounded group flex items-center justify-center"
+                    >
                       <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
                         {color}
                       </span>
@@ -360,7 +364,8 @@ export default function Main({}: Props) {
                             ? "white"
                             : "rgb(15 23 42)",
                       }}
-                      className="p-1 rounded group flex items-center justify-center">
+                      className="p-1 rounded group flex items-center justify-center"
+                    >
                       <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
                         {color}
                       </span>
@@ -381,7 +386,8 @@ export default function Main({}: Props) {
                             ? "white"
                             : "rgb(15 23 42)",
                       }}
-                      className="p-1 rounded group flex items-center justify-center">
+                      className="p-1 rounded group flex items-center justify-center"
+                    >
                       <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
                         {color}
                       </span>
@@ -400,7 +406,8 @@ export default function Main({}: Props) {
                             ? "white"
                             : "rgb(15 23 42)",
                       }}
-                      className="p-1 rounded group flex items-center justify-center">
+                      className="p-1 rounded group flex items-center justify-center"
+                    >
                       <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition cursor-pointer">
                         {color}
                       </span>

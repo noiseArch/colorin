@@ -6,23 +6,30 @@ import chroma from "chroma-js";
 const initialState: { color: Color | undefined } = {
   color: undefined,
 };
-// TODO: Ahorrate un par de API calls guardando el nombre del color 
+// TODO: Ahorrate un par de API calls guardando el nombre del color
 const colorSlice = createSlice({
   name: "color",
   initialState,
   reducers: {
+    setColorName: (state, action: PayloadAction<{ name: string }>) => {
+      if (!state.color) return;
+      state.color.name = action.payload.name;
+    },
     generateNewColor: (
       state,
-      action: PayloadAction<{ hex: string } | undefined>
+      action: PayloadAction<{ name?: string; hex: string } | undefined>
     ) => {
       const hex = action.payload
         ? action.payload.hex
-        : Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');;
+        : Math.floor(Math.random() * 16777216)
+            .toString(16)
+            .padStart(6, "0");
 
       const tinyColor = new TinyColor(hex);
       const colorChroma = chroma("#" + hex);
       const color = {
         hex,
+        name: action.payload ? action.payload.name : undefined,
         rgb: tinyColor.toRgbString(),
         hsl: tinyColor.toHslString(),
         hsv: tinyColor.toHsvString(),
@@ -63,6 +70,6 @@ const colorSlice = createSlice({
   },
 });
 
-export const { generateNewColor } = colorSlice.actions;
+export const { generateNewColor, setColorName } = colorSlice.actions;
 
 export default colorSlice.reducer;
